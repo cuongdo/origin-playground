@@ -31,14 +31,7 @@ contract Token is ERC827Token, Ownable {
         returns (bool)
     {
         require(erc827Whitelist[msg.sender]);
-        // force first passed in parameter to be msg.sender
-        // this deviates from ERC827, but prevents falsifying msg.sender
-        bytes memory senderAndData = abi.encodePacked(msg.sender, _data);
-        return super.approveAndCall(
-            _spender,
-            _value,
-            senderAndData
-        );
+        return super.approveAndCall(_spender, _value, _data);
     }
     
     // TODO: similarly wrapped versions of increaseApprovalAndCall, etc.
@@ -52,11 +45,7 @@ contract Marketplace {
     constructor(Token _token) public {
         token = _token;
     }
-    function proxiedCreateListing(
-        address _seller, // the original msg.sender *must* be first parameter
-        uint256 _deposit,
-        bytes32 _ipfsHash
-    ) public payable {
+    function proxiedCreateListing(address _seller, uint256 _deposit, bytes32 _ipfsHash) public payable {
         // msg.sender would be token address here
         require(msg.sender == address(token), "proxied function must be called by token");
         require(_seller != address(token), "token can't be the seller");
@@ -83,8 +72,9 @@ contract TestERC827 {
             deposit,
             abi.encodeWithSignature(
                 "proxiedCreateListing(address,uint256,bytes32)",
-                address(this) /* this will be overwritten */, deposit, ipfsHash
+                address(this), deposit, ipfsHash
             )
         );
     }
 }
+ 
